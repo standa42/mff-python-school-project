@@ -20,6 +20,8 @@ from math import cos, sin, pi
 
 from statistics import mean
 
+import numpy as np
+
 # from kivy.config import Config
 # Config.set('graphics', 'resizable', False)
 
@@ -69,12 +71,20 @@ class GameWidget(Widget):
         vertices = []
         indices = []
 
-        segments = 100
-        avgs = [random() * 0.8 + 0.1] * 5
+        segments = 300
+        
+        last_y = random() * 0.4 + 0.3
+        steepness = 0
         
         for i in range(segments):
-            new_y = mean(avgs[1:] + [random()])
-            avgs = avgs[1:] + [new_y]
+            steepness += (np.random.normal() / 2000) + (0.5 - last_y) / 500 
+            steepness = np.clip(steepness, -0.005, 0.005)
+
+            new_y = last_y + steepness
+            last_y = new_y
+
+            if new_y > 0.8 or new_y < 0.2:
+                steepness *= -0.1
 
             x = self.float_x_to_window_units(float(i) / segments)
             y = self.float_y_to_window_units(new_y)
@@ -120,9 +130,9 @@ class GameScreen(Screen):
             Color(0, 0, 0.7)
         game_widget.createMap()
 
-        tank = TankWidget()
-        tank.build()
-        self.add_widget(tank)
+        # tank = TankWidget()
+        # tank.build()
+        # self.add_widget(tank)
 
 class HallOfFameScreen(Screen):
     def make_editable(self, editable = True):
