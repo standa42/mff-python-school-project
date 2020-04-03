@@ -1,0 +1,82 @@
+#:import FadeTransition kivy.uix.screenmanager.FadeTransition
+
+ScreenManager:
+    id: screen_manager
+    transition: FadeTransition()
+    MenuScreen:
+        id: menu_screen
+        name: 'MenuScreen'
+        manager: 'screen_manager'
+
+    GameScreen:
+        id: game_screen
+        name: 'GameScreen'
+        manager: 'screen_manager'
+
+    HallOfFameScreen:
+        id: hall_of_fame_screen
+        name: 'HallOfFameScreen'
+        manager: 'screen_manager'
+
+<MenuScreen>:
+    FloatLayout:
+        Label:
+            text: 'Tanks'
+            size_hint: 0.3,0.15
+            pos_hint: {"center_x":0.5, "center_y":0.7}
+        Label:
+            text: 'Number of players: '
+            size_hint: None,0.15
+            pos_hint: {"right":0.48, "center_y":0.5}
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 0.15,0.05
+            pos_hint: {'x':0.52, 'center_y':0.5}
+            Button:
+                text: '-'
+                on_release: number_of_players.text = str(max(2, int(number_of_players.text) - 1))
+            Label:
+                id: number_of_players
+                text: '2'
+            Button:
+                text: '+'
+                on_release: number_of_players.text = str(min(8, int(number_of_players.text) + 1))
+        Button:
+            text: 'Play!'
+            on_release: app.root.current = 'GameScreen'
+            size_hint: 0.3,0.15
+            pos_hint: {"center_x":0.5, "center_y":0.3}
+        Button:
+            text: 'Go to hall of fame'
+            on_release: root._go_to_hall_of_fame()
+            size_hint: 0.2,0.1
+            pos_hint: {"right":1, "top":1}
+
+<GameScreen>:
+    FloatLayout:
+        GameWidget:
+            id: game_widget
+            name: 'GameWidget'
+            size_hint: 1,1
+        Button:
+            text: 'Quit'
+            on_release: app.root.current = 'MenuScreen'
+            size_hint: 0.2,0.1
+            pos_hint: {"right":1, "top":1}
+
+<HallOfFameScreen>:
+    FloatLayout:
+        Label:
+            text: 'Hall of fame - aka 3 last winners'
+            size_hint: 0.3,0.15
+            pos_hint: {"center_x":0.5, "center_y":0.8}
+        BoxLayout:
+            id: scores_holder
+            orientation: 'vertical'
+            size_hint: 0.2,0.3
+            pos_hint: {'center_x':0.5, 'center_y':0.5}
+        Button:
+            text: 'Go to menu'
+            on_release: app.root.current = 'MenuScreen'
+            size_hint: 0.3,0.15
+            pos_hint: {"center_x":0.5, "center_y":0.2}

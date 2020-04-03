@@ -1,0 +1,3 @@
+title=Hello World in Kivy
+author=PH
+orientation=portrait
