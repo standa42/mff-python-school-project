@@ -43,7 +43,7 @@ ScreenManager:
                 on_release: number_of_players.text = str(min(6, int(number_of_players.text) + 1))
         Button:
             text: 'Play!'
-            on_release: app.root.current = 'GameScreen'
+            on_release: root._go_to_game()
             size_hint: 0.3,0.15
             pos_hint: {"center_x":0.5, "center_y":0.3}
         Button:
