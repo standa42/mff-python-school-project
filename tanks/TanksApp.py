@@ -37,9 +37,34 @@ import kivy.core.text
 
 from circular_progress_bar import CircularProgressBar
 
+import scipy.ndimage
+
+import math
+
 # Bans resize
 # from kivy.config import Config
 # Config.set('graphics', 'resizable', False)
+
+class BallWidget(Widget):
+    ball_size = 7
+
+    def build(self, position, velocity):
+        self.position = position
+        self.velocity = velocity
+        self.draw()
+
+    def draw(self):
+        self.canvas.clear()
+        with self.canvas:
+            Color(0,0,0)
+            Ellipse(pos=(self.position.x - BallWidget.ball_size//2, self.position.y - BallWidget.ball_size//2), size=(BallWidget.ball_size, BallWidget.ball_size), segments = 30)
+
+    def update_position(self, dt, power):
+        self.position.x += self.velocity.x * 0.3 * (power/100) * dt * 40 
+        self.position.y += self.velocity.y * 0.3 * (power/100) * dt * 40
+        self.velocity.y -= 1.5
+        self.draw()
+        pass           
 
 class GameState():
     def __init__(self, number_of_players):
@@ -54,6 +79,36 @@ class GameState():
     def get_current_tank(self):
         return self.tanks[0]
 
+    def make_ball(self, power, angle):
+        self.ball_flies = True
+        self.tanks[0].barrel_rotation = angle
+
+
+        pos = self.rotate(
+            (self.tanks[0].position.x , self.tanks[0].position.y ),
+            (self.tanks[0].position.x, self.tanks[0].position.y + TankWidget.tank_size//2 + TankWidget.tank_barrel_size.y + 5),
+            math.radians(angle)
+        )
+
+        ball = BallWidget()
+        ball.build(position = Point(pos[0], pos[1]), velocity = Point(pos[0] - self.tanks[0].position.x, pos[1] - self.tanks[0].position.y))
+        return ball
+
+    
+
+    def rotate(self, origin, point, angle):
+        """
+        https://stackoverflow.com/questions/34372480/rotate-point-about-another-point-in-degrees-python
+        Rotate a point counterclockwise by a given angle around a given origin.
+
+        The angle should be given in radians.
+        """
+        ox, oy = origin
+        px, py = point
+
+        qx = ox + math.cos(angle) * (px - ox) - math.sin(angle) * (py - oy)
+        qy = oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
+        return qx, qy
 
 class GameScreen(Screen):
     colors = [
@@ -90,6 +145,7 @@ class GameScreen(Screen):
         self.progress_bar.thickness = 6
         self.progress_bar.value = 0
         self.progress_bar.widget_size = int(self.screen_size.y * 0.18)
+        self.progress_bar.label.text = ""
         self.progress_bar.label = kivy.core.text.Label(text="{}%", font_size=int(self.screen_size.y * 0.05))
         self.progress_bar.pos = [self.screen_size.x//2 - self.progress_bar.widget_size // 2, 15]
         self.progress_bar.progress_colour = [GameScreen.colors[0].r, GameScreen.colors[0].g, GameScreen.colors[0].b]
@@ -105,6 +161,10 @@ class GameScreen(Screen):
         self.ids.map_widget.clear()
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
         self._keyboard.unbind(on_key_up=self._on_keyboard_up)
+        kivy.clock.Clock.unschedule(self.update)
+        self.remove_widget(self.progress_bar)
+        if self.ball is not None:
+            self.remove_widget(self.ball)
 
     def on_enter(self):
         kivy.clock.Clock.schedule_interval(self.update, 1/40)
@@ -133,7 +193,7 @@ class GameScreen(Screen):
 
         if self.game_state.is_ball_flying():
             # ball fyzics
-
+            self.ball.update_position(dt, self.power)
             # ball hits st - solve it, check game end, end turn
             pass
         else:
@@ -149,6 +209,9 @@ class GameScreen(Screen):
             if self.space_unpressed or self.power == 100:
                 self.space_pressed = False
                 self.space_unpressed = False
+                self.ball = self.game_state.make_ball(self.power, self.angle)
+                self.add_widget(self.ball)
+
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         _, key = keycode
@@ -159,8 +222,6 @@ class GameScreen(Screen):
                 self.right_pressed = True
             elif key == 'spacebar':
                 self.space_pressed = True
-            
-            
 
     def _on_keyboard_up(self, keyboard, keycode):
         _, key = keycode
@@ -171,19 +232,6 @@ class GameScreen(Screen):
         elif key == 'spacebar':
             self.space_pressed = False
             self.space_unpressed = True
-            
-            
-
-
-
-
-
-
-
-
-
-
-
     #endregion
 
     #region Helper functions
