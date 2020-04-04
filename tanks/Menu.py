@@ -19,6 +19,8 @@ from math import cos, sin, pi
 
 from statistics import mean
 
+from circular_progress_bar import CircularProgressBar
+
 class MenuScreen(Screen):
     def _go_to_hall_of_fame(self):
         self.parent.get_screen("HallOfFameScreen").make_editable(False)
