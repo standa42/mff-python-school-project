@@ -59,12 +59,26 @@ class BallWidget(Widget):
             Color(0,0,0)
             Ellipse(pos=(self.position.x - BallWidget.ball_size//2, self.position.y - BallWidget.ball_size//2), size=(BallWidget.ball_size, BallWidget.ball_size), segments = 30)
 
-    def update_position(self, dt, power):
-        self.position.x += self.velocity.x * 0.3 * (power/100) * dt * 40 
-        self.position.y += self.velocity.y * 0.3 * (power/100) * dt * 40
-        self.velocity.y -= 1.5
+    def update_position(self, dt, power, screen_size):
+        self.position.x += self.velocity.x * 0.4 * (2.0 *power/100) * dt * 40 
+        self.position.y += self.velocity.y * 0.4 * (2.0 *power/100) * dt * 40
+        self.velocity.y -= 1.0
+        self._check_edges(screen_size)
         self.draw()
+
+        if self.position.y < 0:
+            return False
+        else:
+            return True
         pass           
+
+    def _check_edges(self, screen_size):
+        if self.position.x < 0 or self.position.x > screen_size.x:
+            self.velocity.x *= -1
+
+
+
+
 
 class GameState():
     def __init__(self, number_of_players):
@@ -72,26 +86,31 @@ class GameState():
         self.alive_players = number_of_players
         self.tanks = []
         self.ball_flies = False
+        self.current_tank = 0
 
     def is_ball_flying(self):
         return self.ball_flies
 
     def get_current_tank(self):
-        return self.tanks[0]
+        return self.tanks[self.current_tank]
+
+    def next_tank(self):
+        self.current_tank = (self.current_tank + 1) % self.alive_players
+        return self.tanks[self.current_tank]
 
     def make_ball(self, power, angle):
         self.ball_flies = True
-        self.tanks[0].barrel_rotation = angle
+        self.tanks[self.current_tank].barrel_rotation = angle
 
 
         pos = self.rotate(
-            (self.tanks[0].position.x , self.tanks[0].position.y ),
-            (self.tanks[0].position.x, self.tanks[0].position.y + TankWidget.tank_size//2 + TankWidget.tank_barrel_size.y + 5),
+            (self.tanks[self.current_tank].position.x , self.tanks[self.current_tank].position.y ),
+            (self.tanks[self.current_tank].position.x, self.tanks[self.current_tank].position.y + TankWidget.tank_size//2 + TankWidget.tank_barrel_size.y + 5),
             math.radians(angle)
         )
 
         ball = BallWidget()
-        ball.build(position = Point(pos[0], pos[1]), velocity = Point(pos[0] - self.tanks[0].position.x, pos[1] - self.tanks[0].position.y))
+        ball.build(position = Point(pos[0], pos[1]), velocity = Point(pos[0] - self.tanks[self.current_tank].position.x, pos[1] - self.tanks[self.current_tank].position.y))
         return ball
 
     
@@ -163,7 +182,7 @@ class GameScreen(Screen):
         self._keyboard.unbind(on_key_up=self._on_keyboard_up)
         kivy.clock.Clock.unschedule(self.update)
         self.remove_widget(self.progress_bar)
-        if self.ball is not None:
+        if 'ball' in locals() and self.ball is not None:
             self.remove_widget(self.ball)
 
     def on_enter(self):
@@ -193,8 +212,23 @@ class GameScreen(Screen):
 
         if self.game_state.is_ball_flying():
             # ball fyzics
-            self.ball.update_position(dt, self.power)
-            # ball hits st - solve it, check game end, end turn
+            valid_pos = self.ball.update_position(dt, self.power, self.screen_size)
+            
+            
+            
+            
+            
+            
+            if not valid_pos:
+                self.remove_widget(self.ball)
+                self.game_state.ball_flies = False
+                next_tank = self.game_state.next_tank()
+                self.angle = next_tank.barrel_rotation
+                self.power = 0
+                self.progress_bar.value = 0
+                self.progress_bar.progress_colour = [next_tank.color.r, next_tank.color.g, next_tank.color.b]
+                self.progress_bar._draw()
+            # TODO: ball hits st - solve it, check game end, end turn
             pass
         else:
             # left,right => angle
