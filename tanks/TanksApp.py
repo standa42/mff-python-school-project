@@ -28,6 +28,9 @@ import numpy as np
 
 import kivy.clock
 
+from kivy.graphics import Rotate
+from kivy.graphics.context_instructions import PopMatrix, PushMatrix
+
 
 # Bans resize
 # from kivy.config import Config
@@ -50,13 +53,45 @@ class BallWidget(Widget):
             Ellipse(pos=self.pos, size=(20, 20), segments = 30)
 
 class TankWidget(Widget):
-    def build(self):
+    tank_size = 26
+    tank_barrel_size = Point(4,6)
+
+    def build(self, player_number, color, position):
+        self.player_number = player_number
+        self.color = color
+        self.position = position
+
+        self.barrel_rotation = 0
+
+        self.draw()
+        
+
+    def draw(self):
         with self.canvas:
-            Color(1, 0.2, 0)
-            Ellipse(pos=(300, 300), size=(20, 20), angle_start = -90, angle_end = 90, segments = 30)
-            Ellipse(pos=(307, 320), size=(5, 5), segments = 30)
+            Color(self.color.r, self.color.g, self.color.b)
+            # half-circle
+            Ellipse(pos=(self.position.x - TankWidget.tank_size/2, self.position.y - TankWidget.tank_size/2), size=(TankWidget.tank_size, TankWidget.tank_size), angle_start = -90, angle_end = 90, segments = 30)
+            # base
+            Rectangle(pos=(self.position.x - TankWidget.tank_size/2, self.position.y - TankWidget.tank_size/4), size=(TankWidget.tank_size, TankWidget.tank_size/4))
+            # barrel
+            PushMatrix()
+            self.rot = Rotate()
+            self.rot.angle = self.barrel_rotation
+            self.rot.origin = (self.position.x, self.position.y)
+            Rectangle(pos=(self.position.x - TankWidget.tank_barrel_size.x/2, self.position.y), size=(TankWidget.tank_barrel_size.x, TankWidget.tank_size/2 + TankWidget.tank_barrel_size.y))
+            PopMatrix()
+
 
 class GameScreen(Screen):
+    colors = [
+        Color(0.933, 0.090, 0.117), # Red
+        Color(0.090, 0.368, 0.933), # Blue
+        Color(0.933, 0.090, 0.878), # Purple
+        Color(0.941, 0.627, 0.141), # Orange
+        Color(0.3, 0.5, 0.2), # Dark green
+        Color(0, 0, 0 )  # Black
+    ]
+
     def set_scene(self, number_of_players, screen_size):
         self.number_of_players = number_of_players
         self.screen_size = Point(screen_size[0], screen_size[1])
@@ -65,15 +100,20 @@ class GameScreen(Screen):
         map_widget = self.ids.map_widget
         map_widget.clear()
         map_widget.generate_terrain()
-        map_widget.generate_tanks_positions(self.number_of_players)
+        tanks_positions = map_widget.generate_tanks_positions(self.number_of_players)
 
-        tank = TankWidget()
-        tank.build()
-        self.add_widget(tank)
+        self.tanks = []
+        for i in range(self.number_of_players):
+            tank = TankWidget()
+            tank.build(i, GameScreen.colors[i], tanks_positions[i])
+            self.add_widget(tank)
+            self.tanks.append(tank)
 
 
     def on_leave(self):
         self.ids.map_widget.clear()
+        for tank in self.tanks:
+            self.remove_widget(tank)
 
     def on_enter(self):
         

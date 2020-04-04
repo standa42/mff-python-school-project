@@ -30,7 +30,7 @@ import kivy.clock
 class MapWidget(Widget):
     map_segments_count = 300
     map_edge_tank_padding = 25
-    min_tank_mutual_distance = 30
+    min_tank_mutual_distance = 25
 
     def clear(self):
         self.canvas.clear()
@@ -47,7 +47,7 @@ class MapWidget(Widget):
             while True:
                 # generate random position and check whether it is distant enought from all other
                 position = randint(MapWidget.map_edge_tank_padding, MapWidget.map_segments_count - MapWidget.map_edge_tank_padding)
-                if all(map(lambda other_position: abs(position - other_position), positions)):
+                if all(map(lambda other_position: abs(position - other_position) > MapWidget.min_tank_mutual_distance, positions)):
                     break
             positions.append(position)
 

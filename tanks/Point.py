@@ -4,4 +4,5 @@ class Point():
         self.y = y
 
     def __iter__(self):
+        '''For unpacking'''
         return iter((self.x, self.y))
