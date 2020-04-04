@@ -37,7 +37,6 @@ import kivy.core.text
 
 from circular_progress_bar import CircularProgressBar
 
-import scipy.ndimage
 
 import math
 
