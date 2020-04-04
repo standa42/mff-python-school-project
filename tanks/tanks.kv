@@ -40,7 +40,7 @@ ScreenManager:
                 text: '2'
             Button:
                 text: '+'
-                on_release: number_of_players.text = str(min(8, int(number_of_players.text) + 1))
+                on_release: number_of_players.text = str(min(6, int(number_of_players.text) + 1))
         Button:
             text: 'Play!'
             on_release: app.root.current = 'GameScreen'
@@ -54,10 +54,10 @@ ScreenManager:
 
 <GameScreen>:
     FloatLayout:
-        GameWidget:
-            id: game_widget
-            name: 'GameWidget'
-            size_hint: 1,1
+        MapWidget:
+            id: map_widget
+            name: 'MapWidget'
+            size_hint: 1, 1
         Button:
             text: 'Quit'
             on_release: app.root.current = 'MenuScreen'
