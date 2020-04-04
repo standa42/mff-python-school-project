@@ -19,24 +19,38 @@ from functools import partial
 from math import cos, sin, pi
 
 from statistics import mean
+from HallOfFame import HallOfFameScreen
+from Menu import MenuScreen
 
 import numpy as np
 
+import kivy.clock
+
+# Bans resize
 # from kivy.config import Config
 # Config.set('graphics', 'resizable', False)
 
 
-# Ellipse:
-#                 pos: 100, 100
-#                 size: 200 * wm.value, 201 * hm.value
-#                 source: 'data/logo/kivy-icon-512.png'
-#                 angle_start: e1.value
-#                 angle_end: e2.value
+class BallWidget(Widget):
+    def build(self):
+        self.pos = [400, 400]
+        with self.canvas:
+            Color(0.2, 0.5, 0.5)
+            Ellipse(pos=self.pos, size=(20, 20), segments = 30)
+    
+    def update(self, dt):
+        self.canvas.clear()
+        self.pos[0] -= 1
+        with self.canvas:
+            Color(0.2, 0.5, 0.5)
+            Ellipse(pos=self.pos, size=(20, 20), segments = 30)
+
 class TankWidget(Widget):
     def build(self):
         with self.canvas:
             Color(1, 0.2, 0)
-            Rectangle(pos=(300, 300), size=(200, 200))
+            Ellipse(pos=(300, 300), size=(20, 20), angle_start = -90, angle_end = 90, segments = 30)
+            Ellipse(pos=(307, 320), size=(5, 5), segments = 30)
 
 
 
@@ -113,10 +127,7 @@ class GameWidget(Widget):
     def float_to_window_units(self, x, y):
         return (self.float_x_to_window_units(x), self.float_y_to_window_units(y))
 
-class MenuScreen(Screen):
-    def _go_to_hall_of_fame(self):
-        self.parent.get_screen("HallOfFameScreen").make_editable(False)
-        self.parent.current = 'HallOfFameScreen'
+
 
 class GameScreen(Screen):
     def on_pre_enter(self):
@@ -124,60 +135,29 @@ class GameScreen(Screen):
         game_widget.clear()
         # initGame
 
+    def on_leave(self):
+        game_widget = self.ids.game_widget
+        game_widget.clear()
+        self.ball.canvas.clear()
+        self.remove_widget(self.ball)
+
     def on_enter(self):
         game_widget = self.ids.game_widget
         with self.canvas.before:
             Color(0, 0, 0.7)
         game_widget.createMap()
 
-        # tank = TankWidget()
-        # tank.build()
-        # self.add_widget(tank)
+        tank = TankWidget()
+        tank.build()
+        self.add_widget(tank)
 
-class HallOfFameScreen(Screen):
-    def make_editable(self, editable = True):
-        self.editable = editable
-        scores_holder = self.ids.scores_holder
-        scores_holder.clear_widgets()
+        self.ball = BallWidget()
+        self.ball.build()
+        self.add_widget(self.ball)
+        kivy.clock.Clock.schedule_interval(self.update, 1/30)
 
-        scores = []
-
-        Path("./scores/").mkdir(parents=True, exist_ok=True)
-        if os.path.isfile('./scores/scores.txt') and os.stat('./scores/scores.txt').st_size > 0:
-            with open('./scores/scores.txt', 'r') as f:
-                content = f.readlines()
-                scores = [line.strip('\n') for line in content]
-
-        scores = scores + ["-Not filled yet-"] * (5-len(scores))
-
-        if(editable):
-            scores_holder.add_widget(TextInput(hint_text='Write your name..', id='score_input'))
-            scores = scores[:-1]
-        
-        for score in scores:
-            scores_holder.add_widget(Label(text=score))
-
-    def on_pre_leave(self):
-        self.save_name()
-    
-    def save_name(self):
-        if(self.editable):
-            scores = []
-
-            Path("./scores/").mkdir(parents=True, exist_ok=True)
-            with open('./scores/scores.txt', 'r+') as f:
-                content = f.readlines()
-                scores = [line.strip('\n') for line in content]
-
-            new_name = self.ids.scores_holder.children[-1].text
-            if(not new_name.strip()):
-                new_name = "Left empty"
-            scores = [new_name] + scores 
-            if(len(scores) > 5):
-                scores = scores[:5]
-
-            with open('./scores/scores.txt', 'w') as f:
-                f.write("\n".join(scores))
+    def update(self, dt):
+        self.ball.update(dt)
 
 
 
