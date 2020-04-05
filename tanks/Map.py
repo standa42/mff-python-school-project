@@ -22,6 +22,7 @@ class MapWidget(Widget):
         self._regenerate_mesh()     
 
     def generate_tanks_positions(self, number_of_tanks):
+        '''generates randomly positions of the tanks (but they are far enough from each other)'''
         positions = []
 
         for _ in range(number_of_tanks):
@@ -37,6 +38,7 @@ class MapWidget(Widget):
         return positions_in_map
 
     def _generate_surface(self):
+        '''constructs y values of surface points'''
         self.surface = []
         self.surface_x = []
         self.surface_y = []
@@ -66,6 +68,7 @@ class MapWidget(Widget):
             self.surface_y.append(surface_height_pixels)
 
     def _regenerate_mesh(self):
+        '''(re)generates mesh(map visualisation) according to the surface points'''
         vertices = []
         indices = []
 
@@ -100,17 +103,25 @@ class MapWidget(Widget):
             Color(0.2, 0.85, 0.3)
             self.mesh = Mesh(vertices=vertices, indices=indices, mode='triangle_strip') 
             
-
     def _position_index_to_pixels(self, index):
+        '''converts segment index to pixels'''
         return self.scene.float_x_to_pixels(index / (MapWidget.map_segments_count - 1))
 
     def collides_with_ball(self, ball_pos, tanks):
+        '''
+        computes collision of ball with the surfece,
+        deforms surface,
+        lower positions of tanks if needed(surface under them went down)
+        return true if there was a collision with terrain, false otherwise
+        '''
         nearest_pos_index = np.argmin(list(map(lambda x: abs(ball_pos.x - x.x), self.surface)))
         nearest_pos = self.surface[nearest_pos_index]
         
+        # nearest surface point is below ball => collision
         if nearest_pos.y > ball_pos.y:
-            # collistion
-            for i in range(len(self.surface)):
+            # deform surface
+            for i in range(len(self.surface)): 
+                # magic formula for deformation - not the best one TODO: can rewrite into better one
                 x_dist = abs(ball_pos.x - self.surface_x[i])
                 if x_dist < 35:
                     cumulator = 0
@@ -118,7 +129,7 @@ class MapWidget(Widget):
                         self.surface_y[i] = max(10, self.surface_y[i] - 2)
                         cumulator += 2
                     self.surface[i] = Point(self.surface_x[i], self.surface_y[i])
-
+            # lower position of indiviual tanks according to surface
             for tank in tanks:
                 for coor in self.surface:
                     if tank.position.x == coor.x:

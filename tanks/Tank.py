@@ -14,9 +14,7 @@ class TankWidget(Widget):
         self.player_number = player_number
         self.color = color
         self.position = position
-
         self.barrel_rotation = 0
-
         self.draw()
         
 

@@ -61,14 +61,17 @@ class GameScreen(Screen):
         self.progress_bar.widget_size = int(self.screen_size.y * 0.18)
         self.progress_bar.label.text = ""
         self.progress_bar.label = kivy.core.text.Label(text="{}%", font_size=int(self.screen_size.y * 0.05))
-        self.progress_bar.pos = [self.screen_size.x//2 - self.progress_bar.widget_size // 2, 15]
+        self.progress_bar.pos = [self.screen_size.x//2 - self.progress_bar.widget_size // 2, 17]
         self.progress_bar.progress_colour = [GameScreen.colors[0].r, GameScreen.colors[0].g, GameScreen.colors[0].b, 0.8]
         self.progress_bar.background_colour = [0.26,0.26,0.26,0.4]
         #self.progress_bar.background_colour = [0.639, 0.639, 0.639]
         self.add_widget(self.progress_bar)
         self.progress_bar._refresh_text()
         self.progress_bar._draw()
-        
+
+        # controls prompt
+        self.prompt_label = Label(text = 'left/right arrow => angle, space => power', size_hint= (0.5, 0.03), pos_hint= {"center_x":0.5, "center_y":0.5})
+        self.add_widget(self.prompt_label)
 
     def on_leave(self):
         for tank in self.game_state.tanks:
@@ -78,8 +81,10 @@ class GameScreen(Screen):
         self._keyboard.unbind(on_key_up=self._on_keyboard_up)
         kivy.clock.Clock.unschedule(self.update)
         self.remove_widget(self.progress_bar)
-        if 'ball' in locals() and self.ball is not None:
+        if hasattr(self,'ball') and self.ball is not None:
             self.remove_widget(self.ball)
+        if hasattr(self,'prompt_label') and self.prompt_label is not None:
+            self.remove_widget(self.prompt_label)
 
     def on_enter(self):
         kivy.clock.Clock.schedule_interval(self.update, 1/40)
@@ -108,9 +113,8 @@ class GameScreen(Screen):
 
         if self.game_state.is_ball_flying():
             # ball fyzics
-            valid_pos = self.ball.update_position(dt, self.power, self.screen_size)
-            hit_terrain = self.map_widget.collides_with_ball(self.ball.position, self.game_state.tanks)
-
+            valid_pos = True 
+            self.ball.update_position(dt, self.power, self.screen_size)
 
             # TODO: solve ball hit into another tanks
             hit_tank = None
@@ -119,6 +123,12 @@ class GameScreen(Screen):
                     if np.sqrt((checked_tank.position.x - self.ball.position.x)**2 + (checked_tank.position.y - self.ball.position.y)**2) < (TankWidget.tank_size//2) + 4.5:
                         hit_tank = checked_tank.player_number
                         valid_pos = False
+
+            if valid_pos:
+                hit_terrain = self.map_widget.collides_with_ball(self.ball.position, self.game_state.tanks)
+
+
+            
             
             
             
@@ -160,6 +170,11 @@ class GameScreen(Screen):
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         _, key = keycode
+
+        if self.prompt_label is not None:
+            self.remove_widget(self.prompt_label)
+            self.prompt_label = None
+
         if not self.game_state.is_ball_flying():
             if key == 'left':
                 self.left_pressed = True

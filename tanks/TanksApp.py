@@ -9,9 +9,10 @@ from kivy.graphics import Color, Ellipse, Line, Rectangle
 import kivy.clock
 from kivy.core.window import Window
 import kivy.core.text
+from kivy.config import Config
 
-import numpy as np
 import math
+import numpy as np
 
 from HallOfFame import HallOfFameScreen
 from Menu import MenuScreen
@@ -24,11 +25,8 @@ from Ball import BallWidget
 
 from circular_progress_bar import CircularProgressBar
 
-# Ban resizing
-# from kivy.config import Config
-# Config.set('graphics', 'resizable', False)
-
-   
+# disallow resizing
+Config.set('graphics', 'resizable', False)
 
 class TanksApp(App):
     pass

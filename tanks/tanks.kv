@@ -22,6 +22,7 @@ ScreenManager:
     FloatLayout:
         Label:
             text: 'Tanks'
+            font_size: 50
             size_hint: 0.3,0.15
             pos_hint: {"center_x":0.5, "center_y":0.7}
         Label:
@@ -43,13 +44,14 @@ ScreenManager:
                 on_release: number_of_players.text = str(min(6, int(number_of_players.text) + 1))
         Button:
             text: 'Play!'
+            font_size: 25
             on_release: root._go_to_game()
-            size_hint: 0.3,0.15
-            pos_hint: {"center_x":0.5, "center_y":0.3}
+            size_hint: 0.2,0.10
+            pos_hint: {"center_x":0.5, "center_y":0.35}
         Button:
-            text: 'Go to hall of fame'
+            text: 'Hall of fame'
             on_release: root._go_to_hall_of_fame()
-            size_hint: 0.2,0.1
+            size_hint: 0.12,0.06
             pos_hint: {"right":1, "top":1}
 
 <GameScreen>:
@@ -61,14 +63,14 @@ ScreenManager:
         Button:
             text: 'Quit'
             on_release: app.root.current = 'MenuScreen'
-            size_hint: 0.2,0.1
+            size_hint: 0.10,0.06
             pos_hint: {"right":1, "top":1}
-        
 
 <HallOfFameScreen>:
     FloatLayout:
         Label:
-            text: 'Hall of fame - aka 3 last winners'
+            text: 'Hall of fame - aka 5 last winners'
+            font_size: 30
             size_hint: 0.3,0.15
             pos_hint: {"center_x":0.5, "center_y":0.8}
         BoxLayout:
@@ -80,5 +82,6 @@ ScreenManager:
             id: go_to_menu_btn
             text: 'Go to menu'
             on_release: app.root.current = 'MenuScreen'
-            size_hint: 0.3,0.15
             pos_hint: {"center_x":0.5, "center_y":0.2}
+            font_size: 25
+            size_hint: 0.2,0.10

@@ -11,7 +11,6 @@ import kivy.clock
 from kivy.core.window import Window
 import kivy.core.text
 
-import numpy as np
 import math
 
 from HallOfFame import HallOfFameScreen
@@ -36,6 +35,7 @@ class GameState():
         return self.tanks[self.current_tank]
 
     def next_tank(self, hit_tank):
+        '''complicated procedure for removing shooted tank and choosing next one to play'''
         to_remove = None
         if hit_tank is not None:
             curr_index = self.current_tank
@@ -52,9 +52,9 @@ class GameState():
         return self.tanks[self.current_tank], to_remove
 
     def make_ball(self, power, angle):
+        '''produces ball widget, computes its position and velocity'''
         self.ball_flies = True
         self.tanks[self.current_tank].barrel_rotation = angle
-
 
         pos = self.rotate(
             (self.tanks[self.current_tank].position.x , self.tanks[self.current_tank].position.y ),

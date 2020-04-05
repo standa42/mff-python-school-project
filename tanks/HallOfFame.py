@@ -40,7 +40,7 @@ class HallOfFameScreen(Screen):
             scores = scores[:-1]
         
         for score in scores:
-            scores_holder.add_widget(Label(text=score))
+            scores_holder.add_widget(Label(text=score, font_size = 15))
 
     def on_pre_leave(self):
         self.save_name()

@@ -10,7 +10,6 @@ import kivy.clock
 from kivy.core.window import Window
 import kivy.core.text
 
-import numpy as np
 import math
 
 from HallOfFame import HallOfFameScreen
@@ -34,25 +33,29 @@ class BallWidget(Widget):
         self.canvas.clear()
         with self.canvas:
             Color(0,0,0)
-            Ellipse(pos=(self.position.x - BallWidget.ball_size//2, self.position.y - BallWidget.ball_size//2), size=(BallWidget.ball_size, BallWidget.ball_size), segments = 30)
+            Ellipse(
+                pos=(self.position.x - BallWidget.ball_size//2, self.position.y - BallWidget.ball_size//2), 
+                size=(BallWidget.ball_size, BallWidget.ball_size), 
+                segments = 30
+            )
 
     def update_position(self, dt, power, screen_size):
+        # set initial velocity
         if self.power is None:
             self.power = power
             self.velocity.x *= 2.2 * self.power / 100
             self.velocity.y *= 2.2 * self.power / 100
+
+        # update position
         self.position.x += self.velocity.x * 0.4 * dt * 40
         self.position.y += self.velocity.y * 0.4 * dt * 40
+
+        # gravitational effect on velocity
         self.velocity.y -= 1.0
         self._check_edges(screen_size)
         self.draw()
 
-        if self.position.y < 0:
-            return False
-        else:
-            return True
-        pass           
-
     def _check_edges(self, screen_size):
+        '''Rubber edges - reflect ball back into the scene'''
         if self.position.x < 0 or self.position.x > screen_size.x:
             self.velocity.x *= -1
