@@ -7,7 +7,7 @@ from kivy.graphics.context_instructions import PopMatrix, PushMatrix
 from Point import Point
 
 class TankWidget(Widget):
-    tank_size = 26
+    tank_size = 28
     tank_barrel_size = Point(5,7)
 
     def build(self, player_number, color, position):
