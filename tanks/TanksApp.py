@@ -1,46 +1,27 @@
 import kivy
 from kivy.app import App
-from kivy.lang import Builder
-
-
-from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
-
+from kivy.uix.screenmanager import Screen
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from random import random, randint
 from kivy.graphics import Color, Ellipse, Line, Rectangle
+import kivy.clock
+from kivy.core.window import Window
+import kivy.core.text
 
-from pathlib import Path
-import os
+import numpy as np
+import math
 
-from kivy.graphics import Mesh
-from functools import partial
-from math import cos, sin, pi
-
-from statistics import mean
 from HallOfFame import HallOfFameScreen
 from Menu import MenuScreen
 from Map import MapWidget
 from Point import Point
 from Tank import TankWidget
 
-import numpy as np
-
-import kivy.clock
-
-from kivy.graphics import Rotate
-from kivy.graphics.context_instructions import PopMatrix, PushMatrix
-from kivy.core.window import Window
-
-import kivy.core.text
-
 from circular_progress_bar import CircularProgressBar
 
-
-import math
-
-# Bans resize
+# Ban resizing
 # from kivy.config import Config
 # Config.set('graphics', 'resizable', False)
 
@@ -50,6 +31,7 @@ class BallWidget(Widget):
     def build(self, position, velocity):
         self.position = position
         self.velocity = velocity
+        self.power = None
         self.draw()
 
     def draw(self):
@@ -59,8 +41,11 @@ class BallWidget(Widget):
             Ellipse(pos=(self.position.x - BallWidget.ball_size//2, self.position.y - BallWidget.ball_size//2), size=(BallWidget.ball_size, BallWidget.ball_size), segments = 30)
 
     def update_position(self, dt, power, screen_size):
-        self.position.x += self.velocity.x * 0.4 * (2.0 *power/100) * dt * 40 
-        self.position.y += self.velocity.y * 0.4 * (2.0 *power/100) * dt * 40
+        # if self.power is None:
+        #     self.power = power
+        #     self.velocity = 
+        self.position.x += self.velocity.x * 0.4 * dt * 40 * (2.2 *(power+0.1)/100)
+        self.position.y += self.velocity.y * 0.4 * dt * 40 * (2.2 *(power+0.1)/100)
         self.velocity.y -= 1.0
         self._check_edges(screen_size)
         self.draw()
@@ -74,11 +59,7 @@ class BallWidget(Widget):
     def _check_edges(self, screen_size):
         if self.position.x < 0 or self.position.x > screen_size.x:
             self.velocity.x *= -1
-
-
-
-
-
+            
 class GameState():
     def __init__(self, number_of_players):
         self.number_of_players = number_of_players
@@ -118,7 +99,6 @@ class GameState():
         """
         https://stackoverflow.com/questions/34372480/rotate-point-about-another-point-in-degrees-python
         Rotate a point counterclockwise by a given angle around a given origin.
-
         The angle should be given in radians.
         """
         ox, oy = origin
@@ -145,18 +125,19 @@ class GameScreen(Screen):
 
     def on_pre_enter(self):
         # map
-        map_widget = self.ids.map_widget
-        map_widget.clear()
-        map_widget.generate_terrain()
+        self.map_widget = self.ids.map_widget
+        self.map_widget.clear()
+        self.map_widget.generate_terrain()
 
         # tanks
-        tanks_positions = map_widget.generate_tanks_positions(self.game_state.number_of_players)
+        tanks_positions = self.map_widget.generate_tanks_positions(self.game_state.number_of_players)
         self.game_state.tanks = []
         for i in range(self.game_state.number_of_players):
             tank = TankWidget()
             tank.build(i, GameScreen.colors[i], tanks_positions[i])
             self.add_widget(tank)
             self.game_state.tanks.append(tank)
+
 
         # progress bar
         self.progress_bar = CircularProgressBar()
@@ -212,13 +193,13 @@ class GameScreen(Screen):
         if self.game_state.is_ball_flying():
             # ball fyzics
             valid_pos = self.ball.update_position(dt, self.power, self.screen_size)
+            hit_terrain = self.map_widget.collides_with_ball(self.ball.position, self.game_state.tanks)
+
             
             
             
             
-            
-            
-            if not valid_pos:
+            if not valid_pos or hit_terrain:
                 self.remove_widget(self.ball)
                 self.game_state.ball_flies = False
                 next_tank = self.game_state.next_tank()

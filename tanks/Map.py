@@ -1,31 +1,12 @@
-
 import kivy
-from kivy.app import App
-from kivy.lang import Builder
-
-from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
-
 from kivy.uix.widget import Widget
-from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
 from random import random, randint
 from kivy.graphics import Color, Ellipse, Line, Rectangle
-
-from pathlib import Path
-import os
-
 from kivy.graphics import Mesh
-from functools import partial
-from math import cos, sin, pi
 
-from statistics import mean
-from HallOfFame import HallOfFameScreen
-from Menu import MenuScreen
 from Point import Point
 
 import numpy as np
-
-import kivy.clock
 
 class MapWidget(Widget):
     map_segments_count = 300
@@ -109,6 +90,7 @@ class MapWidget(Widget):
 
         indices = list(range(MapWidget.map_segments_count*2 + 4))
 
+        self.canvas.clear()
         with self.canvas.before:
             # blue sky
             Color(0.4, 0.9, 1)
@@ -121,3 +103,31 @@ class MapWidget(Widget):
 
     def _position_index_to_pixels(self, index):
         return self.scene.float_x_to_pixels(index / (MapWidget.map_segments_count - 1))
+
+    def collides_with_ball(self, ball_pos, tanks):
+        nearest_pos_index = np.argmin(list(map(lambda x: abs(ball_pos.x - x.x), self.surface)))
+        nearest_pos = self.surface[nearest_pos_index]
+        
+        if nearest_pos.y > ball_pos.y:
+            # collistion
+            for i in range(len(self.surface)):
+                x_dist = abs(ball_pos.x - self.surface_x[i])
+                if x_dist < 35:
+                    cumulator = 0
+                    while cumulator < 35 and (np.sqrt(abs(self.surface_x[i] - ball_pos.x)**2 + abs(self.surface_y[i] - ball_pos.y)**2) < 35 or ball_pos.y < self.surface_y[i]):
+                        self.surface_y[i] -= 2
+                        cumulator += 2
+                    self.surface[i] = Point(self.surface_x[i], self.surface_y[i])
+
+            for tank in tanks:
+                for coor in self.surface:
+                    if tank.position.x == coor.x:
+                        tank.position.y = coor.y
+                        tank.draw()
+
+            self._regenerate_mesh()
+            return True
+        else:
+            # no collistion
+            return False
+
