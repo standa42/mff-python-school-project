@@ -25,6 +25,9 @@ class HallOfFameScreen(Screen):
         scores = []
 
         Path("./scores/").mkdir(parents=True, exist_ok=True)
+        if not os.path.isfile('./scores/scores.txt'):
+            with open('./scores/scores.txt', 'a'):
+                pass
         if os.path.isfile('./scores/scores.txt') and os.stat('./scores/scores.txt').st_size > 0:
             with open('./scores/scores.txt', 'r') as f:
                 content = f.readlines()

@@ -214,7 +214,7 @@ class GameScreen(Screen):
             hit_tank = None
             for checked_tank in self.game_state.tanks:
                 if checked_tank.player_number != tank.player_number:
-                    if np.sqrt((checked_tank.position.x - self.ball.position.x)**2 + (checked_tank.position.y - self.ball.position.y)**2) < (TankWidget.tank_size//2) + 3:
+                    if np.sqrt((checked_tank.position.x - self.ball.position.x)**2 + (checked_tank.position.y - self.ball.position.y)**2) < (TankWidget.tank_size//2) + 4.5:
                         hit_tank = checked_tank.player_number
                         valid_pos = False
             
