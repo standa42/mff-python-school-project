@@ -115,7 +115,7 @@ class MapWidget(Widget):
                 if x_dist < 35:
                     cumulator = 0
                     while cumulator < 35 and (np.sqrt(abs(self.surface_x[i] - ball_pos.x)**2 + abs(self.surface_y[i] - ball_pos.y)**2) < 35 or ball_pos.y < self.surface_y[i]):
-                        self.surface_y[i] -= 2
+                        self.surface_y[i] = max(10, self.surface_y[i] - 2)
                         cumulator += 2
                     self.surface[i] = Point(self.surface_x[i], self.surface_y[i])
 

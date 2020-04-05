@@ -41,11 +41,12 @@ class BallWidget(Widget):
             Ellipse(pos=(self.position.x - BallWidget.ball_size//2, self.position.y - BallWidget.ball_size//2), size=(BallWidget.ball_size, BallWidget.ball_size), segments = 30)
 
     def update_position(self, dt, power, screen_size):
-        # if self.power is None:
-        #     self.power = power
-        #     self.velocity = 
-        self.position.x += self.velocity.x * 0.4 * dt * 40 * (2.2 *(power+0.1)/100)
-        self.position.y += self.velocity.y * 0.4 * dt * 40 * (2.2 *(power+0.1)/100)
+        if self.power is None:
+            self.power = power
+            self.velocity.x *= 2.2 * self.power / 100
+            self.velocity.y *= 2.2 * self.power / 100
+        self.position.x += self.velocity.x * 0.4 * dt * 40
+        self.position.y += self.velocity.y * 0.4 * dt * 40
         self.velocity.y -= 1.0
         self._check_edges(screen_size)
         self.draw()
@@ -74,9 +75,21 @@ class GameState():
     def get_current_tank(self):
         return self.tanks[self.current_tank]
 
-    def next_tank(self):
-        self.current_tank = (self.current_tank + 1) % self.alive_players
-        return self.tanks[self.current_tank]
+    def next_tank(self, hit_tank):
+        to_remove = None
+        if hit_tank is not None:
+            curr_index = self.current_tank
+            removed_index = list(map(lambda x: x.player_number, self.tanks)).index(hit_tank)
+            self.current_tank -= 1
+            to_remove = self.tanks[removed_index]
+            del self.tanks[removed_index]
+            if removed_index > self.current_tank:
+                self.current_tank += 1
+            self.alive_players -= 1
+        self.current_tank += 1
+        if self.current_tank >= self.alive_players:
+            self.current_tank = 0
+        return self.tanks[self.current_tank], to_remove
 
     def make_ball(self, power, angle):
         self.ball_flies = True
@@ -147,7 +160,8 @@ class GameScreen(Screen):
         self.progress_bar.label.text = ""
         self.progress_bar.label = kivy.core.text.Label(text="{}%", font_size=int(self.screen_size.y * 0.05))
         self.progress_bar.pos = [self.screen_size.x//2 - self.progress_bar.widget_size // 2, 15]
-        self.progress_bar.progress_colour = [GameScreen.colors[0].r, GameScreen.colors[0].g, GameScreen.colors[0].b]
+        self.progress_bar.progress_colour = [GameScreen.colors[0].r, GameScreen.colors[0].g, GameScreen.colors[0].b, 0.8]
+        self.progress_bar.background_colour = [0.26,0.26,0.26,0.4]
         #self.progress_bar.background_colour = [0.639, 0.639, 0.639]
         self.add_widget(self.progress_bar)
         self.progress_bar._refresh_text()
@@ -195,20 +209,35 @@ class GameScreen(Screen):
             valid_pos = self.ball.update_position(dt, self.power, self.screen_size)
             hit_terrain = self.map_widget.collides_with_ball(self.ball.position, self.game_state.tanks)
 
-            
+
+            # TODO: solve ball hit into another tanks
+            hit_tank = None
+            for checked_tank in self.game_state.tanks:
+                if checked_tank.player_number != tank.player_number:
+                    if np.sqrt((checked_tank.position.x - self.ball.position.x)**2 + (checked_tank.position.y - self.ball.position.y)**2) < (TankWidget.tank_size//2) + 3:
+                        hit_tank = checked_tank.player_number
+                        valid_pos = False
             
             
             
             if not valid_pos or hit_terrain:
                 self.remove_widget(self.ball)
                 self.game_state.ball_flies = False
-                next_tank = self.game_state.next_tank()
+                next_tank, removed_tank = self.game_state.next_tank(hit_tank)
+                if removed_tank is not None:
+                    self.remove_widget(removed_tank)
                 self.angle = next_tank.barrel_rotation
                 self.power = 0
                 self.progress_bar.value = 0
-                self.progress_bar.progress_colour = [next_tank.color.r, next_tank.color.g, next_tank.color.b]
+                self.progress_bar.progress_colour = [next_tank.color.r, next_tank.color.g, next_tank.color.b, 0.8]
                 self.progress_bar._draw()
-            # TODO: ball hits st - solve it, check game end, end turn
+                self.space_pressed = False
+                self.space_unpressed = False
+                
+            if len(self.game_state.tanks) == 1:
+                self.parent.get_screen("HallOfFameScreen").make_editable(True, self.game_state.tanks[0].color, size_hint = Point(self.size[0], self.size[1] // 20))
+                self.parent.current = 'HallOfFameScreen'
+
             pass
         else:
             # left,right => angle
@@ -217,7 +246,7 @@ class GameScreen(Screen):
                 tank.update(self.angle)
             # space => power
             if self.space_pressed:
-                self.power += 0.5
+                self.power += 0.4
                 self.progress_bar.value = int(np.clip(self.power, 0, 100))
             # space unpress || full power => make ball
             if self.space_unpressed or self.power == 100:
@@ -244,8 +273,10 @@ class GameScreen(Screen):
         elif key == 'right':
             self.right_pressed = False
         elif key == 'spacebar':
+            if self.space_pressed:
+                self.space_unpressed = True
             self.space_pressed = False
-            self.space_unpressed = True
+            
     #endregion
 
     #region Helper functions
