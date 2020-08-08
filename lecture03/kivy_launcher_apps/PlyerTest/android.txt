@@ -1,3 +1,0 @@
-title=Test Plyer
-author=PH
-orientation=portrait
