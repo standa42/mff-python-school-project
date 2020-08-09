@@ -1,4 +1,4 @@
-# Mff_Python_School_Project
+# mff_python_school_project
 - Tanks game - school project in Python and Kivy\
 - Features local multiplayer on one PC\
 - Video: https://youtu.be/XKkhcg5h9VI
